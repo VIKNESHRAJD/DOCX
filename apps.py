@@ -4,36 +4,39 @@ import tempfile
 import os
 import pypandoc
 
-# Automatically download Pandoc if not found
+# Automatically download pandoc if not found
 try:
     pypandoc.get_pandoc_version()
 except OSError:
     pypandoc.download_pandoc()
 
-st.set_page_config(page_title="Word ↔ PDF Converter", page_icon="📝")
+st.set_page_config(page_title="Word ↔ PDF Converter", page_icon="📄")
 st.title("📄 Word ↔ PDF Converter")
-st.write("Convert between Word (.docx) and PDF files (cross-platform)")
+st.markdown("Easily convert between **Word (.docx)** and **PDF** files.")
 
-option = st.radio("Select conversion type:", ["PDF to Word", "Word to PDF"])
+conversion_type = st.radio("Choose conversion direction:", ["PDF to Word", "Word to PDF"])
 
-if option == "PDF to Word":
-    uploaded_pdf = st.file_uploader("Upload a PDF file", type=["pdf"])
-    if uploaded_pdf and st.button("Convert to Word"):
+# PDF ➡ Word
+if conversion_type == "PDF to Word":
+    pdf_file = st.file_uploader("Upload a PDF file", type=["pdf"])
+
+    if pdf_file and st.button("Convert to Word"):
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
-            tmp_pdf.write(uploaded_pdf.read())
-            tmp_pdf_path = tmp_pdf.name
+            tmp_pdf.write(pdf_file.read())
+            pdf_path = tmp_pdf.name
 
-        docx_output = tmp_pdf_path.replace(".pdf", ".docx")
+        docx_path = pdf_path.replace(".pdf", ".docx")
 
         try:
             with st.spinner("Converting PDF to Word..."):
-                cv = Converter(tmp_pdf_path)
-                cv.convert(docx_output, start=0, end=None)
+                cv = Converter(pdf_path)
+                cv.convert(docx_path)
                 cv.close()
 
-            with open(docx_output, "rb") as f:
+            with open(docx_path, "rb") as f:
+                st.success("✅ Conversion successful!")
                 st.download_button(
-                    label="📥 Download Word File",
+                    label="📥 Download .docx",
                     data=f,
                     file_name="converted.docx",
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -41,22 +44,30 @@ if option == "PDF to Word":
         except Exception as e:
             st.error(f"❌ Conversion failed: {e}")
 
-elif option == "Word to PDF":
-    uploaded_docx = st.file_uploader("Upload a Word file", type=["docx"])
-    if uploaded_docx and st.button("Convert to PDF"):
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".docx") as tmp_docx:
-            tmp_docx.write(uploaded_docx.read())
-            tmp_docx_path = tmp_docx.name
+# Word ➡ PDF
+elif conversion_type == "Word to PDF":
+    docx_file = st.file_uploader("Upload a Word (.docx) file", type=["docx"])
 
-        pdf_output = tmp_docx_path.replace(".docx", ".pdf")
+    if docx_file and st.button("Convert to PDF"):
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".docx") as tmp_docx:
+            tmp_docx.write(docx_file.read())
+            docx_path = tmp_docx.name
+
+        pdf_path = docx_path.replace(".docx", ".pdf")
 
         try:
             with st.spinner("Converting Word to PDF..."):
-                pypandoc.convert_file(tmp_docx_path, 'pdf', outputfile=pdf_output)
+                pypandoc.convert_file(
+                    docx_path,
+                    to='pdf',
+                    outputfile=pdf_path,
+                    extra_args=["--pdf-engine=xelatex"]
+                )
 
-            with open(pdf_output, "rb") as f:
+            with open(pdf_path, "rb") as f:
+                st.success("✅ Conversion successful!")
                 st.download_button(
-                    label="📥 Download PDF File",
+                    label="📥 Download PDF",
                     data=f,
                     file_name="converted.pdf",
                     mime="application/pdf"
