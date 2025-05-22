@@ -1,5 +1,6 @@
 streamlit
-pypandoc
 pdf2docx
 python-docx
-Pillow
+pypandoc
+pillow
+PyPDF2
