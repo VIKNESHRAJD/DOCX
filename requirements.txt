@@ -1,4 +1,4 @@
 streamlit
-python-docx
 pdf2docx
-docx2pdf
+python-docx
+pypandoc
